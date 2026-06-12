@@ -1,20 +1,26 @@
 import os
 import logging
 import requests
+import asyncio
 from telethon import TelegramClient, events
 
 logging.getLogger('telethon').setLevel(logging.ERROR)
 
 API_ID = int(os.environ.get('API_ID'))
 API_HASH = os.environ.get('API_HASH')
-PHONE = os.environ.get('PHONE')
 N8N_WEBHOOK = os.environ.get('N8N_WEBHOOK')
 CHANNEL = os.environ.get('CHANNEL', 'worldcupGoals2026')
 
 async def main():
+    # Use connect() not start() — session file handles auth
     client = TelegramClient('session', API_ID, API_HASH)
-    await client.start(phone=PHONE)
-    print("✅ Authenticated & Connected!")
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        print("❌ Session not authorized!")
+        return
+
+    print("✅ Connected!")
 
     @client.on(events.NewMessage(chats=CHANNEL))
     async def handler(event):
@@ -34,5 +40,4 @@ async def main():
     print(f"👂 Listening to {CHANNEL}...")
     await client.run_until_disconnected()
 
-import asyncio
 asyncio.run(main())
